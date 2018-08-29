@@ -28,6 +28,7 @@ void readSensors() {
   line_right = 0; // Replace with code to read the right IR sensor
   line_center = 0; // Replace with code to read the center IR sensor
 }
+
 void followLine() {
   int threshold = 500;
  
@@ -68,17 +69,20 @@ void followLine() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  readSensors(); // Read sensors once per loop() call
+  readSensors();
   
   sparki.clearLCD();
   sparki.print("STATE: ");
   sparki.println(current_state);
+  
   switch (current_state){
-  case 1: 
-  case 2: 
-  case 3:followLine();
-  // ...
+  case 1:rotate();
+  case 2:driveForward();
+  case 3:capture();
+  case 4:turnAround();
+  case 5:driveForward();
+  case 6:followLine(); //finished - george
+  case 7:stopBeep();
   }
   
   sparki.updateLCD();
