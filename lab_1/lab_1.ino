@@ -1,9 +1,7 @@
 #include <sparki.h>
 
-#define STATE_SEARCH_OBJ 0
-
 // Set up some global variables with default values to be replaced during operation
-int current_state = STATE_SEARCH_OBJ;
+int current_state = 0;
 const int threshold = 700; // IR reading threshold to detect whether there's a black line under the sensor
 int cm_distance = 1000;
 int line_left = 1000;
@@ -23,10 +21,37 @@ void setup() {
 }
 
 void readSensors() {
-  cm_distance = 0; // Replace with code to read the distance sensor
+  cm_distance = sparki.ping();
   line_left = 0; // Replace with code to read the left IR sensor
   line_right = 0; // Replace with code to read the right IR sensor
   line_center = 0; // Replace with code to read the center IR sensor
+}
+
+void rotate() {
+  if(cm_distance != -1){
+    if (cm_distance <= 30){
+      sparki.moveStop();
+      current_state = 1;
+    }
+  } 
+   if(cm_distance > 30){
+     sparki.moveLeft();
+     sparki.moveRight();
+     delay(500);
+   }
+}
+/*
+void driveForward(){
+  sparki.moveForward();
+}
+
+void capture(){
+  //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
+  sparki.gripperClose();
+}
+
+void turnAround(){
+
 }
 
 void followLine() {
@@ -64,42 +89,28 @@ void followLine() {
   delay(100); // wait 0.1 seconds
 }
 
-void driveForward(){
-  sparki.moveForward();
+void stopBeep(){
+  
 }
-
-void capture(){
-  //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
-  sparki.gripperClose();
-}
-
-void rotate() {
-  if (cm_distance < 3000){
-    sparki.motorStop(MOTOR_LEFT);
-    sparki.motorStop(MOTOR_RIGHT);
-    current_state = 1;
-  } else {
-    sparki.motorRotate(MOTOR_LEFT,DIR_CCW,50);
-    sparki.motorRotate(MOTOR_RIGHT,DIR_CW,50);
-  }
-}
-
+ */
 void loop() {
   readSensors();
   
   sparki.clearLCD();
   sparki.print("STATE: ");
   sparki.println(current_state);
+  sparki.print("DIST: ");
+  sparki.println(cm_distance);
   sparki.gripperOpen();
   
   switch (current_state){
-  case 1:rotate();
-  case 2:driveForward();
-  case 3:capture();
-  case 4:turnAround();
-  case 5:driveForward();
-  case 6:followLine(); //finished - george
-  case 7:stopBeep();
+  case 0:rotate();
+  //case 1:driveForward();
+  //case 2:capture();
+  //case 3:turnAround();
+  //case 4:driveForward();
+  //case 5:followLine(); //finished - george
+  //case 6:stopBeep();
   }
   
   sparki.updateLCD();
