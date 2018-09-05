@@ -64,12 +64,22 @@ void followLine() {
   delay(100); // wait 0.1 seconds
 }
 
+void driveForward(){
+  sparki.moveForward();
+}
+
+void capture(){
+  //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
+  sparki.gripperClose();
+}
+
 void loop() {
   readSensors();
   
   sparki.clearLCD();
   sparki.print("STATE: ");
   sparki.println(current_state);
+  sparki.gripperOpen();
   
   switch (current_state){
   case 1:rotate();
