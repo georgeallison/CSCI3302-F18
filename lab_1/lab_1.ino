@@ -73,6 +73,17 @@ void capture(){
   sparki.gripperClose();
 }
 
+void rotate() {
+  if (cm_distance < 3000){
+    sparki.motorStop(MOTOR_LEFT);
+    sparki.motorStop(MOTOR_RIGHT);
+    current_state = 1;
+  } else {
+    sparki.motorRotate(MOTOR_LEFT,DIR_CCW,50);
+    sparki.motorRotate(MOTOR_RIGHT,DIR_CW,50);
+  }
+}
+
 void loop() {
   readSensors();
   
