@@ -40,11 +40,15 @@ void rotate() {
      delay(500);
    }
 }
-/*
+
 void driveForward(){
   sparki.moveForward();
+  delay(500);
+  if (cm_distance < 5 {
+    sparki.moveStop();
+  }
 }
-
+/*
 void capture(){
   //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
   sparki.gripperClose();
