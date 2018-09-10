@@ -73,7 +73,6 @@ void rotate() {
 }
 
 void driveForward(){
-<<<<<<< HEAD
   if(current_state == 1){
     if(cm_distance > 7 || cm_distance < 0){
       sparki.moveForward();
@@ -87,15 +86,6 @@ void driveForward(){
 }
 
 
-=======
-  sparki.moveForward();
-  delay(500);
-  if (cm_distance < 5 {
-    sparki.moveStop();
-  }
-}
-/*
->>>>>>> dee20dd316e1e95cbbeb0d0f8a5df31c267ca77a
 void capture(){
   if(current_state == 2){
     //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
