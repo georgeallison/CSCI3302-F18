@@ -22,78 +22,14 @@ void setup() {
 
 void readSensors() {
   cm_distance = sparki.ping();
-  line_left = 0; // Replace with code to read the left IR sensor
-  line_right = 0; // Replace with code to read the right IR sensor
-  line_center = 0; // Replace with code to read the center IR sensor
+  line_left = sparki.lineLeft(); // Replace with code to read the left IR sensor
+  line_right = sparki.lineRight(); // Replace with code to read the right IR sensor
+  line_center = sparki.lineCenter(); // Replace with code to read the center IR sensor
 }
 
-void rotate() {
-  if(cm_distance != -1){
-    if (cm_distance <= 30){
-      sparki.moveStop();
-      current_state = 1;
-    }
-  } 
-   if(cm_distance > 30){
-     sparki.moveLeft();
-     sparki.moveRight();
-     delay(500);
-   }
-}
-/*
-void driveForward(){
-  sparki.moveForward();
-}
-
-void capture(){
-  //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
-  sparki.gripperClose();
-}
-
-void turnAround(){
-
-}
-
-void followLine() {
-  int threshold = 500;
-  int lineLeft   = sparki.lineLeft();   // measure the left IR sensor
-  int lineCenter = sparki.lineCenter(); // measure the center IR sensor
-  int lineRight  = sparki.lineRight();  // measure the right IR sensor
-  if ( lineLeft < threshold ) // if line is below left line sensor
-  {  
-    sparki.moveLeft(); // turn left
-  }
-  if ( lineRight < threshold ) // if line is below right line sensor
-  {  
-    sparki.moveRight(); // turn right
-  }
-  // if the center line sensor is the only one reading a line
-  if ( (lineCenter < threshold) && (lineLeft > threshold) && (lineRight > threshold) )
-  {
-    sparki.moveForward(); // move forward
-  }  
-  if( (lineCenter < threshold) && (lineLeft < threshold) && (lineRight < threshold) )
-  {
-    //reached start/end point of track (T junction)
-    sparki.moveStop();
-    current_state = 7;
-  }
-  sparki.clearLCD(); // wipe the screen
-  sparki.print("Line Left: "); // show left line sensor on screen
-  sparki.println(lineLeft);
-  sparki.print("Line Center: "); // show center line sensor on screen
-  sparki.println(lineCenter);
-  sparki.print("Line Right: "); // show right line sensor on screen
-  sparki.println(lineRight);
-  sparki.updateLCD(); // display all of the information written to the screen
-  delay(100); // wait 0.1 seconds
-}
-
-void stopBeep(){
-  
-}
- */
 void loop() {
+  sparki.motorStop(MOTOR_RIGHT);
+  sparki.motorStop(MOTOR_LEFT);
   readSensors();
   
   sparki.clearLCD();
@@ -101,18 +37,136 @@ void loop() {
   sparki.println(current_state);
   sparki.print("DIST: ");
   sparki.println(cm_distance);
-  sparki.gripperOpen();
-  
+
   switch (current_state){
-  case 0:rotate();
-  //case 1:driveForward();
-  //case 2:capture();
-  //case 3:turnAround();
-  //case 4:driveForward();
-  //case 5:followLine(); //finished - george
-  //case 6:stopBeep();
+    case 0:
+      rotate();
+    case 1:
+      driveForward();
+    case 2:
+      capture();
+    case 3:
+      driveToTrack();
+    case 4:
+      followLine();
+    //case 5:stopBeep();
   }
   
+
   sparki.updateLCD();
   delay(100); // Only run controller at 10Hz
 }
+
+void rotate() {
+  if(current_state == 0){
+    if(cm_distance > 0 && cm_distance <= 30){
+      sparki.println("Object Detected");
+      sparki.moveStop();
+      delay(200);
+      current_state = 1;
+    } else{
+     sparki.motorRotate(MOTOR_RIGHT, DIR_CW, 100);
+     sparki.motorRotate(MOTOR_LEFT, DIR_CW, 100);
+     delay(200);
+    }
+  }
+}
+
+void driveForward(){
+<<<<<<< HEAD
+  if(current_state == 1){
+    if(cm_distance > 7 || cm_distance < 0){
+      sparki.moveForward();
+      delay(200);
+    }else {
+      sparki.moveStop();
+      delay(500);
+      current_state = 2;
+    }
+  }
+}
+
+
+=======
+  sparki.moveForward();
+  delay(500);
+  if (cm_distance < 5 {
+    sparki.moveStop();
+  }
+}
+/*
+>>>>>>> dee20dd316e1e95cbbeb0d0f8a5df31c267ca77a
+void capture(){
+  if(current_state == 2){
+    //gripper should start as opened; there are no sensors to indicate if the gripper is open or closed
+    sparki.println("Closing grippers");
+    sparki.clearLCD();
+    sparki.updateLCD();
+    sparki.gripperClose();
+    delay(6000);
+    
+    //turn 180
+    sparki.motorRotate(MOTOR_RIGHT, DIR_CW, 100);
+    sparki.motorRotate(MOTOR_LEFT, DIR_CW, 100);
+    delay(5000);
+    current_state = 3;
+  }
+}
+
+void driveToTrack(){
+  if(current_state == 3){ // display all of the information written to the screen
+  
+    if(sparki.lineCenter() > 500){
+       sparki.moveForward();
+       delay(200);
+    } else {
+      //perpandicular case?
+      sparki.RGB(RGB_BLUE);
+      current_state = 4;
+      delay(1000);
+    }
+  }
+}
+
+
+void followLine() {
+  if (current_state == 4) {
+    if ( line_left < threshold ) // if line is below left line sensor
+    {  
+      sparki.moveLeft(); // turn left
+    }
+    if ( line_right < threshold ) // if line is below right line sensor
+    {  
+      sparki.moveRight(); // turn right
+    }
+    // if the center line sensor is the only one reading a line
+    if ( (line_center < threshold) && (line_left > threshold) && (line_right > threshold) )
+    {
+      sparki.moveForward(); // move forward
+    }  
+    if( (line_center < threshold) && (line_left < threshold) && (line_right < threshold) )
+    {
+      //reached start/end point of track (T junction)
+      sparki.moveStop();
+      current_state = 7;
+      sparki.gripperOpen();
+      delay(4000);
+      sparki.beep();
+      delay(1000);
+    }
+    sparki.clearLCD(); // wipe the screen
+    sparki.print("Line Left: "); // show left line sensor on screen
+    sparki.println(line_left);
+    sparki.print("Line Center: "); // show center line sensor on screen
+    sparki.println(line_center);
+    sparki.print("Line Right: "); // show right line sensor on screen
+    sparki.println(line_right);
+    sparki.updateLCD(); // display all of the information written to the screen
+    delay(100); // wait 0.1 seconds
+  }
+}
+/*
+void stopBeep(){
+  
+}
+ */
