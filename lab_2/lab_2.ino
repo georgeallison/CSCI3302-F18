@@ -4,7 +4,7 @@
  */
  
 #include <sparki.h>
-#define CYCLE_TIME .100 //seconds
+#define CYCLE_TIME 1000 //milliseconds
 
 //Program States:
 #define CONTROLLER_FOLLOW_LINE 1
@@ -17,6 +17,8 @@ int line_center = 1000;
 int line_right = 1000;
 unsigned long time;
 
+double leftWheel = 0;
+double rightWheel = 0;
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
 
 void setup() {  
@@ -34,49 +36,52 @@ void readSensors() {
 }
 
 void measure_30cm_speed() {
-  sparki.clearLCD();
   Serial.print("Time:");
   time = millis();
   sparki.moveForward(30);//move 30 cm
   Serial.println(millis() - time);
-  sparki.updateLCD();
   delay(1000);
 }
 
 
 void updateOdometry() {
-  // TODO
+  //integrate formula 3.40 ???
 }
 
 void displayOdometry() {
-  // TODO
+  sparki.clearLCD();
+  sparki.print("x pos: ");
+  sparki.print(pose_x + "\n");
+  sparki.print("y pos: ");
+  sparki.print(pose_y + "\n");
+  sparki.print("theta: ");
+  sparki.print(pose_theta + "\n");
 }
 
 void loop() {
-
-  // TODO: Insert loop timing/initialization code here
-  
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
       if (lineLeft < threshold){ 
         sparki.moveLeft();
         //left movement is 2.73 cm/s speed for 0.1 sec; 0.273 cm of movement for each wheel
-        //leftWheel -= 0.273;
-        //rightWheel += 0.273;
+        leftWheel -= 0.273;
+        rightWheel += 0.273;
       }else if (lineRight < threshold) {  
         sparki.moveRight();
         //left movement is 2.73 cm/s speed for 0.1 sec; 0.273 cm of movement for each wheel
-        //leftWheel += 0.273;
-        //rightWheel -= 0.273;
+        leftWheel += 0.273;
+        rightWheel -= 0.273;
       }else if ((lineCenter < threshold) && (lineLeft > threshold) && (lineRight > threshold)){
         sparki.moveForward();
-        //leftWheel += 0.273;
-        //rightWheel += 0.273;
+        leftWheel += 0.273;
+        rightWheel += 0.273;
       }
+      updateOdometry();
+      displayOdometry();
       break;
     case CONTROLLER_DISTANCE_MEASURE:
       measure_30cm_speed();
       break;
   }
-  delay(1000*CYCLE_TIME);
+  delay(CYCLE_TIME); //10 
 }
