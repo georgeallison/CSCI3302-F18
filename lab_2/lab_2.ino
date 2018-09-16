@@ -2,30 +2,33 @@
  * Lab 2 Odometry | September 2018
  * George Allison, Pierce Doogan
  */
- 
 #include <sparki.h>
-#define CYCLE_TIME 1000 //milliseconds
 
-//Program States:
+#define CYCLE_TIME .100  // seconds
+
+// Program States
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_DISTANCE_MEASURE 2
 
-int current_state = CONTROLLER_FOLLOW_LINE; //used in switch statement
-const int threshold = 700; //used with IR sensor
+
+int current_state = CONTROLLER_FOLLOW_LINE; // Change this variable to determine which controller to run
+const int threshold = 700;
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
-unsigned long time;
 
-double leftWheel = 0;
-double rightWheel = 0;
+//odometry variables
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
+const float speed = 0.0273; //meters per second
+const float wDiam = 0.0857; //diameter between wheels
+const float pi = 3.1415;
+const int rot = 50; //degrees sparki can rotate at 10Hz
+int dir; //used for logic in UpdateOdometry()
 
-void setup() {  
-  Serial.begin(9600); //set the data rate to 9600 bits per second for serial data transmission
+void setup() {
   pose_x = 0.;
   pose_y = 0.;
-  pose_theta = 0.; //starting position at origin looking forward
+  pose_theta = 0.;
 }
 
 void readSensors() {
@@ -36,6 +39,7 @@ void readSensors() {
 }
 
 void measure_30cm_speed() {
+  //function prints values to the Arduino serial monitor
   Serial.print("Time:");
   time = millis();
   sparki.moveForward(30);//move 30 cm
@@ -43,45 +47,57 @@ void measure_30cm_speed() {
   delay(1000);
 }
 
-
 void updateOdometry() {
-  //integrate formula 3.40 ???
+  if (dir == 0){ //turning left
+    pose_theta -= rot * 0.1;
+  }
+  if (dir == 1){ //turning right
+    pose_theta += rot * 0.1;
+  }
+  if (dir == 2){ //going straight
+    pose_y += .1 * speed * sin(pose_theta * (pi / 180));
+    pose_x += .1 * speed * cos(theta * (pi / 180));
+  }
 }
 
 void displayOdometry() {
   sparki.clearLCD();
-  sparki.print("x pos: ");
-  sparki.print(pose_x + "\n");
-  sparki.print("y pos: ");
-  sparki.print(pose_y + "\n");
-  sparki.print("theta: ");
-  sparki.print(pose_theta + "\n");
+  sparki.print("x pos: "); sparki.println(pose_x);
+  sparki.print("y pos: "); sparki.println(pose_y);
+  sparki.print("theta: "); sparki.println(pose_theta);
+  sparki.updateLCD();
 }
 
 void loop() {
+
+  // TODO: Insert loop timing/initialization code here
+  
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
       if (lineLeft < threshold){ 
         sparki.moveLeft();
-        //left movement is 2.73 cm/s speed for 0.1 sec; 0.273 cm of movement for each wheel
-        leftWheel -= 0.273;
-        rightWheel += 0.273;
-      }else if (lineRight < threshold) {  
-        sparki.moveRight();
-        //left movement is 2.73 cm/s speed for 0.1 sec; 0.273 cm of movement for each wheel
-        leftWheel += 0.273;
-        rightWheel -= 0.273;
-      }else if ((lineCenter < threshold) && (lineLeft > threshold) && (lineRight > threshold)){
-        sparki.moveForward();
-        leftWheel += 0.273;
-        rightWheel += 0.273;
+        dir = 0;
+        updateOdometry();
+        displayOdometry();
       }
-      updateOdometry();
-      displayOdometry();
+      if (lineRight < threshold) {  
+        sparki.moveRight();
+        dir = 1;
+        updateOdometry();
+        displayOdometry();
+      }
+      if ((lineCenter < threshold) && (lineLeft > threshold) && (lineRight > threshold)){
+        sparki.moveForward();
+        dir = 2;
+        updateOdometry();
+        displayOdometry();
+      }
       break;
     case CONTROLLER_DISTANCE_MEASURE:
       measure_30cm_speed();
       break;
   }
-  delay(CYCLE_TIME); //10 
+
+  delay(1000*CYCLE_TIME);
 }
+
