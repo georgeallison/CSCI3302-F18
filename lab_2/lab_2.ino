@@ -6,12 +6,7 @@
 
 #define CYCLE_TIME .100  // seconds
 
-// Program States
-#define CONTROLLER_FOLLOW_LINE 1
-#define CONTROLLER_DISTANCE_MEASURE 2
-
-
-int current_state = CONTROLLER_FOLLOW_LINE; // Change this variable to determine which controller to run
+int current_state = 0; // Change this variable to determine which controller to run
 const int threshold = 700;
 int line_left = 1000;
 int line_center = 1000;
@@ -22,13 +17,18 @@ float pose_x = 0., pose_y = 0., pose_theta = 0.;
 const float speed = 0.0273; //meters per second
 const float wDiam = 0.0857; //diameter between wheels
 const float pi = 3.1415;
-const int rot = 50; //degrees sparki can rotate at 10Hz
+const int rot = 112; //degrees sparki can rotate at 10Hz
 int dir; //used for logic in UpdateOdometry()
+int distance;
+int time;
 
 void setup() {
+  sparki.RGB(RGB_GREEN);
+  sparki.servo(SERVO_CENTER);
   pose_x = 0.;
   pose_y = 0.;
   pose_theta = 0.;
+  delay(1000);
 }
 
 void readSensors() {
@@ -56,7 +56,12 @@ void updateOdometry() {
   }
   if (dir == 2){ //going straight
     pose_y += .1 * speed * sin(pose_theta * (pi / 180));
-    pose_x += .1 * speed * cos(theta * (pi / 180));
+    pose_x += .1 * speed * cos(pose_theta * (pi / 180));
+  }
+  if (dir == 3){ //resetting values
+    pose_y = 0;
+    pose_x = 0;
+    pose_theta = 0;
   }
 }
 
@@ -69,33 +74,38 @@ void displayOdometry() {
 }
 
 void loop() {
-
-  // TODO: Insert loop timing/initialization code here
+  
+  readSensors();
   
   switch (current_state) {
-    case CONTROLLER_FOLLOW_LINE:
-      if (lineLeft < threshold){ 
+    case 0:
+      if (line_left < threshold){ 
+        sparki.RGB(RGB_YELLOW);
         sparki.moveLeft();
         dir = 0;
-        updateOdometry();
-        displayOdometry();
       }
-      if (lineRight < threshold) {  
+      if (line_right < threshold) {
+        sparki.RGB(RGB_BLUE);
         sparki.moveRight();
         dir = 1;
-        updateOdometry();
-        displayOdometry();
       }
-      if ((lineCenter < threshold) && (lineLeft > threshold) && (lineRight > threshold)){
+      if ((line_center < threshold) && (line_left > threshold) && (line_right > threshold)){
+        sparki.RGB(RGB_PINK);
         sparki.moveForward();
         dir = 2;
-        updateOdometry();
-        displayOdometry();
       }
-      break;
-    case CONTROLLER_DISTANCE_MEASURE:
-      measure_30cm_speed();
-      break;
+      if ((line_center < threshold) && (line_left < threshold) && (line_right < threshold)){
+        sparki.RGB(RGB_GREEN);
+        sparki.beep();
+        sparki.moveForward();
+        dir = 3;//end cycle
+      }
+      
+      updateOdometry();
+      displayOdometry();
+      
+    //case 1:
+      //measure_30cm_speed();
   }
 
   delay(1000*CYCLE_TIME);
