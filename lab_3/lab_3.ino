@@ -55,6 +55,9 @@ float to_degrees(double rad) {
 }
 
 void setup() {
+  sparki.servo(SERVO_CENTER);
+  sparki.gripperOpen();
+  digitalWrite(STATUS_LED, HIGH);
   pose_x = 0.;
   pose_y = 0.;
   pose_theta = 0.;
@@ -120,7 +123,6 @@ void loop() {
    
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
-      // Useful for testing odometry updates
       readSensors();
       if (line_center < threshold) {
         sparki.moveForward();
@@ -136,7 +138,6 @@ void loop() {
         sparki.moveStop();
       }
 
-      // Check for start line, use as loop closure
       if (line_left < threshold && line_right < threshold && line_center < threshold) {
         pose_x = 0.;
         pose_y = 0.;
