@@ -62,7 +62,7 @@ void setup() {
   right_wheel_rotating = NONE;
 
   // Set test cases here!
-  set_pose_destination(-0.01,0.02, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+  set_pose_destination(-.2,0.2, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
 }
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
@@ -143,25 +143,19 @@ void loop() {
       break;
     case CONTROLLER_GOTO_POSITION_PART2:
       // TODO: Implement solution using moveLeft, moveForward, moveRight functions
-      if(pose_theta == dest_pose_theta - atan(dest_pose_y / dest_pose_x)){
-        orig_dist_to_goal = sqrt(pow(2.0, (dest_pose_x - pose_x)) + pow(2.0, (dest_pose_y - pose_y)));
-        sparki.moveForward(orig_dist_to_goal);
-      } else{
-        pose_theta = dest_pose_theta - atan(dest_pose_y / dest_pose_x);
-        sparki.moveLeft(to_degrees(pose_theta));
-        sparki.clearLCD();
-        sparki.println(pose_theta);
-        sparki.println(dest_pose_theta - atan(dest_pose_y / dest_pose_x));
-        sparki.updateLCD();
-        delay(1000);
-      }
-
+      pose_theta = dest_pose_theta - atan2(dest_pose_y, dest_pose_x);
+      sparki.moveLeft(to_degrees(pose_theta));
+      sparki.clearLCD();
+      sparki.println(pose_theta);
+      sparki.println(dest_pose_theta - atan2(dest_pose_y, dest_pose_x));
+      sparki.updateLCD();
+      delay(1000);
       //distance to move
-      
-
-      //change heading
-      
-      //sparki.moveLeft(dest_pose_theta - pose_theta);
+      orig_dist_to_goal = sqrt(pow(2.0, (dest_pose_x - pose_x)) + pow(2.0, (dest_pose_y - pose_y)));
+      sparki.moveForward(orig_dist_to_goal);
+      delay(1000);
+      //change heading      
+      sparki.moveLeft(dest_pose_theta - pose_theta);
       pose_x = dest_pose_x;
       pose_y = dest_pose_y;
       pose_theta = dest_pose_theta;
@@ -187,4 +181,3 @@ void loop() {
   else
     delay(10);
 }
-
