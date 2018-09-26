@@ -124,12 +124,14 @@ void loop() {
       readSensors();
       if (line_center < threshold) {
         sparki.moveForward();
+        pose_y += .1 * ROBOT_SPEED * sin(pose_theta * (3.1415 / 180));
+        pose_x += .1 * ROBOT_SPEED * cos(pose_theta * (3.1415 / 180));
       } else if (line_left < threshold) {
-        // TODO: Fill in odometry code
         sparki.moveLeft();
+        pose_theta -= 112 * 0.1;
       } else if (line_right < threshold) {
-        // TODO: Fill in odometry code
         sparki.moveRight();
+        pose_theta += 112 * 0.1;
       } else {
         sparki.moveStop();
       }
