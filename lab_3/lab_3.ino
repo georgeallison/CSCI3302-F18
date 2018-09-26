@@ -55,9 +55,6 @@ float to_degrees(double rad) {
 }
 
 void setup() {
-  sparki.servo(SERVO_CENTER);
-  sparki.gripperOpen();
-  digitalWrite(STATUS_LED, HIGH);
   pose_x = 0.;
   pose_y = 0.;
   pose_theta = 0.;
@@ -65,7 +62,7 @@ void setup() {
   right_wheel_rotating = NONE;
 
   // Set test cases here!
-  set_pose_destination(-.2,0.2, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+  set_pose_destination(0.1,0.1, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
 }
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
@@ -123,21 +120,21 @@ void loop() {
    
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
+      // Useful for testing odometry updates
       readSensors();
       if (line_center < threshold) {
         sparki.moveForward();
-        pose_y += .1 * ROBOT_SPEED * sin(pose_theta * (3.1415 / 180));
-        pose_x += .1 * ROBOT_SPEED * cos(pose_theta * (3.1415 / 180));
       } else if (line_left < threshold) {
+        // TODO: Fill in odometry code
         sparki.moveLeft();
-        pose_theta -= 112 * 0.1;
       } else if (line_right < threshold) {
+        // TODO: Fill in odometry code
         sparki.moveRight();
-        pose_theta += 112 * 0.1;
       } else {
         sparki.moveStop();
       }
 
+      // Check for start line, use as loop closure
       if (line_left < threshold && line_right < threshold && line_center < threshold) {
         pose_x = 0.;
         pose_y = 0.;
@@ -146,22 +143,25 @@ void loop() {
       break;
     case CONTROLLER_GOTO_POSITION_PART2:
       // TODO: Implement solution using moveLeft, moveForward, moveRight functions
-      pose_theta = dest_pose_theta - atan2(dest_pose_y, dest_pose_x);
-      sparki.moveLeft(to_degrees(pose_theta));
-      sparki.clearLCD();
-      sparki.println(pose_theta);
-      sparki.println(dest_pose_theta - atan2(dest_pose_y, dest_pose_x));
-      sparki.updateLCD();
+      if (pose_x != dest_pose_x && pose_y != dest_pose_y && pose_theta != dest_pose_theta){
+      b_err = atan2(dest_pose_y - pose_y, dest_pose_x - pose_x) - pose_theta;
+      d_err = sqrt(pow((dest_pose_x - pose_x), 2.0) + pow((dest_pose_y - pose_y), 2.0));
+      
+      sparki.moveLeft(to_degrees(b_err));
+      pose_theta += b_err;
+      h_err = dest_pose_theta - pose_theta;
       delay(1000);
       //distance to move
-      orig_dist_to_goal = sqrt(pow(2.0, (dest_pose_x - pose_x)) + pow(2.0, (dest_pose_y - pose_y)));
-      sparki.moveForward(orig_dist_to_goal);
+      sparki.moveForward(d_err * 100);
       delay(1000);
       //change heading      
-      sparki.moveLeft(dest_pose_theta - pose_theta);
+      sparki.moveLeft(to_degrees(dest_pose_theta - pose_theta));
       pose_x = dest_pose_x;
       pose_y = dest_pose_y;
-      pose_theta = dest_pose_theta;
+      pose_theta = 0;
+      dest_pose_theta = pose_theta;
+      delay(1000);
+      }
       break;      
     case CONTROLLER_GOTO_POSITION_PART3:      
       updateOdometry();
