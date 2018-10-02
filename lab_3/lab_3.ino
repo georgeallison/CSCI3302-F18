@@ -93,13 +93,13 @@ void readSensors() {
 void updateOdometry() {
   // TODO: Update pose_x, pose_y, pose_theta
   // TODO: Update pose_x, pose_y, pose_theta
-  pose_theta += change_in_rotation;
+  pose_theta += dTheta;
   pose_y += .1 * current_speed * sin(pose_theta * (M_PI / 180));
   pose_x += .1 * current_speed * cos(pose_theta * (M_PI / 180));
 
   // Bound theta
-  if (pose_theta > M_PI) pose_theta -= 2.*M_PI;
-  if (pose_theta <= -M_PI) pose_theta += 2.*M_PI;
+  if (pose_theta > 2 * M_PI) pose_theta -= 2.*M_PI;
+  if (pose_theta <= -2 * M_PI) pose_theta += 2.*M_PI;
 }
 
 void displayOdometry() {
@@ -180,19 +180,15 @@ void loop() {
       b_err = atan2(dest_pose_y - pose_y, dest_pose_x - pose_x) - pose_theta;
       d_err = sqrt(pow((dest_pose_x - pose_x), 2.0) + pow((dest_pose_y - pose_y), 2.0));
       h_err = dest_pose_theta - pose_theta;
-      float change_in_x = 0;
-      float change_in_rotation = 0;
-      if (b_err > 0.2) {
-        change_in_x = 0.1 * d_err;
-        change_in_rotation = 0.1 * b_err;
-      }
-      else if (b_err < 0.00001){
-        change_in_x = 0;
-        change_in_rotation = 0;
-        //Calculations to include header for the changes.
-      }
-      phi_l = (change_in_x - ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
-      phi_r = (change_in_x + ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
+      dX = 0.1 * d_err;
+      dTheta = 0.1 * b_err;
+//      else if (b_err < 0.00001){
+//        dX = 0;
+//        dTheta = 0;
+//        //Calculations to include header for the changes.
+//      }
+      phi_l = (dX - ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
+      phi_r = (dX + ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
       float maxOfRotation = max(phi_l, phi_r);
       left_speed_pct = phi_l / (maxOfRotation);
       right_speed_pct = phi_r / (maxOfRotation);
