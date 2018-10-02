@@ -55,6 +55,11 @@ float to_degrees(double rad) {
 }
 
 void setup() {
+  sparki.servo(SERVO_CENTER);
+  sparki.gripperOpen();
+  sparki.RGB(RGB_GREEN);
+  delay(1000);
+
   pose_x = 0.;
   pose_y = 0.;
   pose_theta = 0.;
@@ -178,9 +183,12 @@ void loop() {
       // sparki.motorRotate function calls for reference:
       sparki.motorRotate(MOTOR_LEFT, left_dir, int(l_speed * 100));
       sparki.motorRotate(MOTOR_RIGHT, right_dir, int(r_speed * 100));
-      pose_theta += change_in_theta
+      
+      pose_theta += change_in_theta;
+
       pose_y += .1 * speed * sin(pose_theta * (pi / 180));
       pose_x += .1 * speed * cos(pose_theta * (pi / 180));
+
 
       break;
   }
