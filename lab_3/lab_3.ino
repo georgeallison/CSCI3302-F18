@@ -15,6 +15,7 @@
 #define BCK -1
 
 
+float current_speed = 0;
 // Line following configuration variables
 const int threshold = 700;
 int line_left = 1000;
@@ -22,12 +23,15 @@ int line_center = 1000;
 int line_right = 1000;
 
 // Controller and dTheta update rule settings
-const int current_state = CONTROLLER_GOTO_POSITION_PART2;
+const int current_state = CONTROLLER_GOTO_POSITION_PART3;
+
+//remove
+float change_in_rotation = 0;
 
 // Odometry bookkeeping
 float orig_dist_to_goal = 0.0;
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
-float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
+float dest_pose_x = 1., dest_pose_y = 1., dest_pose_theta = 1.;
 float d_err = 0., b_err = 0., h_err = 0.; // Distance error (m), bearing error (rad), heading error (rad)
 float phi_l = 0., phi_r = 0.; // Wheel rotation (radians)
 
@@ -56,7 +60,6 @@ float to_degrees(double rad) {
 
 void setup() {
   sparki.servo(SERVO_CENTER);
-  sparki.gripperOpen();
   sparki.RGB(RGB_GREEN);
   delay(1000);
 
@@ -89,6 +92,10 @@ void readSensors() {
 
 void updateOdometry() {
   // TODO: Update pose_x, pose_y, pose_theta
+  // TODO: Update pose_x, pose_y, pose_theta
+  pose_theta += change_in_rotation;
+  pose_y += .1 * current_speed * sin(pose_theta * (M_PI / 180));
+  pose_x += .1 * current_speed * cos(pose_theta * (M_PI / 180));
 
   // Bound theta
   if (pose_theta > M_PI) pose_theta -= 2.*M_PI;
@@ -173,6 +180,8 @@ void loop() {
       b_err = atan2(dest_pose_y - pose_y, dest_pose_x - pose_x) - pose_theta;
       d_err = sqrt(pow((dest_pose_x - pose_x), 2.0) + pow((dest_pose_y - pose_y), 2.0));
       h_err = dest_pose_theta - pose_theta;
+      float change_in_x = 0;
+      float change_in_rotation = 0;
       if (b_err > 0.2) {
         change_in_x = 0.1 * d_err;
         change_in_rotation = 0.1 * b_err;
@@ -182,23 +191,19 @@ void loop() {
         change_in_rotation = 0;
         //Calculations to include header for the changes.
       }
-      left_rot = (change_in_x - ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
-      right_rot = (change_in_x + ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
-      const maxOfRotation = max(left_rot, right_rot);
-      l_speed = left_rot / (maxOfRotation);
-      r_speed = right_rot / (maxOfRotation);
+      phi_l = (change_in_x - ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
+      phi_r = (change_in_x + ((AXLE_DIAMETER * change_in_rotation)/2)) / WHEEL_RADIUS;
+      float maxOfRotation = max(phi_l, phi_r);
+      left_speed_pct = phi_l / (maxOfRotation);
+      right_speed_pct = phi_r / (maxOfRotation);
       // TODO: Implement solution using motorRotate and proportional feedback controller.
       // sparki.motorRotate function calls for reference:
-      current_speed = ((WHEEL_RADIUS * l_speed / 2)) + ((WHEEL_RADIUS * r_speed) / 2);
-      sparki.motorRotate(MOTOR_LEFT, left_dir, int(l_speed * 100));
-      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(r_speed * 100));
+      current_speed = ((WHEEL_RADIUS *  left_speed_pct / 2)) + ((WHEEL_RADIUS * right_speed_pct) / 2);
+      sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct * 100));
+      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct * 100));
 
       break;
   }
-
-      break;
-  }
-
   sparki.clearLCD();
   displayOdometry();
   sparki.updateLCD();
