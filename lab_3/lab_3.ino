@@ -70,7 +70,7 @@ void setup() {
   right_wheel_rotating = NONE;
 
   // Set test cases here!
-  set_pose_destination(0.1,0.1, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+  set_pose_destination(5.0, 5.0, 180);  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
 }
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
