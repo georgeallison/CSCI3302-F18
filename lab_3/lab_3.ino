@@ -31,7 +31,7 @@ float change_in_rotation = 0;
 // Odometry bookkeeping
 float orig_dist_to_goal = 0.0;
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
-float dest_pose_x = 1., dest_pose_y = 1., dest_pose_theta = 1.;
+float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
 float d_err = 0., b_err = 0., h_err = 0.; // Distance error (m), bearing error (rad), heading error (rad)
 float phi_l = 0., phi_r = 0.; // Wheel rotation (radians)
 
@@ -70,7 +70,11 @@ void setup() {
   right_wheel_rotating = NONE;
 
   // Set test cases here!
+<<<<<<< HEAD
   set_pose_destination(5.0, 5.0, 180);  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+=======
+  set_pose_destination(0.1,2.0, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+>>>>>>> 3038ab4423797618d31744391b652d556dd8e2ff
 }
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
@@ -93,7 +97,7 @@ void readSensors() {
 void updateOdometry() {
   // TODO: Update pose_x, pose_y, pose_theta
   // TODO: Update pose_x, pose_y, pose_theta
-  pose_theta += dTheta;
+  pose_theta += ((((WHEEL_RADIUS *  left_speed_pct * ROBOT_SPEED * 0.1) / AXLE_DIAMETER)) - ((WHEEL_RADIUS * left_speed_pct * ROBOT_SPEED * 0.1) / AXLE_DIAMETER));
   pose_y += .1 * current_speed * sin(pose_theta * (M_PI / 180));
   pose_x += .1 * current_speed * cos(pose_theta * (M_PI / 180));
 
@@ -187,14 +191,14 @@ void loop() {
 //        dTheta = 0;
 //        //Calculations to include header for the changes.
 //      }
-      phi_l = (dX - ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
-      phi_r = (dX + ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
+      phi_l = ((2 * dX) - (AXLE_DIAMETER * dTheta)) / (2*WHEEL_RADIUS);
+      phi_r = ((2 * dX) + (AXLE_DIAMETER * dTheta)) / (2*WHEEL_RADIUS);
       float maxOfRotation = max(phi_l, phi_r);
       left_speed_pct = phi_l / (maxOfRotation);
       right_speed_pct = phi_r / (maxOfRotation);
       // TODO: Implement solution using motorRotate and proportional feedback controller.
       // sparki.motorRotate function calls for reference:
-      current_speed = ((WHEEL_RADIUS *  left_speed_pct / 2)) + ((WHEEL_RADIUS * right_speed_pct) / 2);
+      current_speed = ((WHEEL_RADIUS *  left_speed_pct * phi_l / 2)) + ((WHEEL_RADIUS * right_speed_pct * phi_r) / 2);
       sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct * 100));
       sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct * 100));
 
