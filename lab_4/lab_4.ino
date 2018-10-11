@@ -34,13 +34,12 @@ float pose_x = 0., pose_y = 0., pose_theta = 0., pose_servo = 0.;
 int left_wheel_rotating = 0, right_wheel_rotating = 0;
 
 // TODO: Define world_map multi-dimensional array
-bool world_map[4][4]
 
 
 
 // TODO: Figure out how many meters of space are in each grid cell
-const float CELL_RESOLUTION_X = 15;  // Line following map is ~60cm x ~42cm
-const float CELL_RESOLUTION_Y = 10; // Line following map is ~60cm x ~42cm
+const float CELL_RESOLUTION_X = 0;  // Line following map is ~60cm x ~42cm
+const float CELL_RESOLUTION_Y = 0; // Line following map is ~60cm x ~42cm
 
 
 void setup() {
@@ -71,44 +70,28 @@ float to_degrees(float rad) {
 
 // Ultrasonic Sensor Readings -> Robot coordinates
 void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {
-  *rx = dist*sin(theta);
-  *ry = dist*cos(theta);
-  
+  // TODO
 }
 
 // Robot coordinates -> World frame coordinates
 void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
-  *gx = rx * cos(pose_theta) - ry * sin(pose_theta) + pose_x;
-  *gy = rx * sin(pose_theta) + ry * cos(pose_theta) + pose_y;
+  // TODO
 }
 
 bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
-  if (x < 0 || y <0) {
-    return 1;
-  } else if (x > 40 || y > 60){
-    return 2;
-  }
+  // TODO: Set *i and *j to their corresponding grid coords  
 
-  *j = floor(x/15);
-  *j = floor(y/10);
-  
-  return 0;
+  // TODO: Return 0 if the X,Y coordinates were out of bounds
+
+  return 1;
 }
 
 // Turns grid coordinates into world coordinates (grid centers)
 bool transform_grid_coords_to_xy(int i, int j, float *x, float *y) {
   // TODO: Return 0 if the I,J coordinates were out of bounds
-  if (i < 0 || j < 0) {
-    return 1;
-  } else if (i > 15 || j > 10) {
-    return 1;
-  ]
-    // TODO: Set *x and *y
-   *x = floor(i*15) + 7;
-   *y = floor(i*10) + 5; 
 
-   return 0;
- 
+
+  // TODO: Set *x and *y
 
 
   
@@ -160,13 +143,39 @@ void updateOdometry(float cycle_time) {
 
 void displayMap() {
   // TODO: Measure how many pixels will be taken by each grid cell
-  const int PIXELS_PER_X_CELL = 0;
-  const int PIXELS_PER_Y_CELL = 0; 
+  const int PIXELS_PER_X_CELL = 30;
+  const int PIXELS_PER_Y_CELL = 15;
   int cur_cell_x=-1, cur_cell_y=-1;
 
   // TODO: Make sure that if the robot is "off-grid", e.g., at a negative grid position or somewhere outside your grid's max x or y position that you don't try to plot the robot's position!
   
-  // TODO: Draw Map
+  // 4x4 grid of rectangles that are 15px tall and 30 px wide
+  // positioned to have 4 px vertical buffer and 2px horizontal buffer from edge of screen
+  sparki.drawRect(4,2, 30,15);
+  sparki.drawRect(34,2, 30,15);
+  sparki.drawRect(64,2, 30,15);
+  sparki.drawRect(94,2, 30,15);
+
+  sparki.drawRect(4,17, 30,15);
+  sparki.drawRect(34,17, 30,15);
+  sparki.drawRect(64,17, 30,15);
+  sparki.drawRect(94,17, 30,15);
+
+  sparki.drawRect(4,32, 30,15);
+  sparki.drawRect(34,32, 30,15);
+  sparki.drawRect(64,32, 30,15);
+  sparki.drawRect(94,32, 30,15);
+
+  sparki.drawRect(4,47, 30,15);
+  sparki.drawRect(34,47, 30,15);
+  sparki.drawRect(64,47, 30,15);
+  sparki.drawRect(94,47, 30,15);
+  // above code should draw hollow rectangles, fill them in when an object is found:
+  /*
+      if( object is found )
+          sparki.drawRectFilled( in corresponding grid position ); 
+  */
+
 }
 
 void serialPrintOdometry() {
@@ -208,13 +217,12 @@ void loop() {
   sparki.servo(-to_degrees(pose_servo));
 
   // TODO: Check if sensors found an object
-  if(distance > 0){
-     float rx, ry, gx, gy, i, j;
-     transform_us_to_robot_coords(distance, SERVO_POS_DEG, &rx, &ry);
-     transform_robot_to_world_coords(rx, ry, &gx, &gy);
-     transform_xy_to_grid_coords(gx, gy, &i, &j);
-     world_map[i, j] = true;
+  if(distance < 10){ // if the distance measured is less than 10 centimeters
+    sparki.println("object found");
+    sparki.beep();
   }
+
+
   // TODO: Adjust Map to accommodate new object
 
   displayMap();
