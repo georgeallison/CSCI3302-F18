@@ -1,7 +1,10 @@
 #include <sparki.h>
 #include <math.h>
 
-#define M_PI 3.14159
+#ifndef M_PI
+#  define M_PI 3.1415
+#endif
+
 #define ROBOT_SPEED 0.0275 // meters/second
 #define CYCLE_TIME .050 // Default 50ms cycle time
 #define AXLE_DIAMETER 0.0857 // meters
@@ -78,8 +81,8 @@ void set_pose_destination(float x, float y, float t) {
   dest_pose_x = x;
   dest_pose_y = y;
   dest_pose_theta = t;
-  if (dest_pose_theta > 2M_PI) dest_pose_theta -= 2*M_PI;
-  if (dest_pose_theta < -2M_PI) dest_pose_theta += 2*M_PI;
+  if (dest_pose_theta > 2. * M_PI) dest_pose_theta -= 2. * M_PI;
+  if (dest_pose_theta < -2. * M_PI) dest_pose_theta += 2. * M_PI;
   orig_dist_to_goal = 0; // TODO
 }
 
@@ -202,6 +205,14 @@ void loop() {
   sparki.clearLCD();
   displayOdometry();
   sparki.updateLCD();
+
+  if(pose_x >= dest_pose_x && pose_y >= dest_pose_y){
+    sparki.moveStop();
+    sparki.RGB(RGB_RED);
+    sparki.beep();
+    delay(10000);
+  }
+  
 
   end_time = millis();
   delay_time = end_time - begin_time;
