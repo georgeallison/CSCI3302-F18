@@ -18,7 +18,6 @@
 #define BCK -1
 
 
-float current_speed = 0;
 // Line following configuration variables
 const int threshold = 700;
 int line_left = 1000;
@@ -73,7 +72,7 @@ void setup() {
   right_wheel_rotating = NONE;
 
   // Set test cases here!
-  set_pose_destination(0.1,0.1, to_radians(90));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
+  set_pose_destination(.1,.1, to_radians(180));  // Goal_X_Meters, Goal_Y_Meters, Goal_Theta_Degrees
 }
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
@@ -182,36 +181,39 @@ void loop() {
       b_err = atan2(dest_pose_y - pose_y, dest_pose_x - pose_x) - pose_theta;
       d_err = sqrt(pow((dest_pose_x - pose_x), 2.0) + pow((dest_pose_y - pose_y), 2.0));
       h_err = dest_pose_theta - pose_theta;
-      dX = 0.1 * d_err;
-      dTheta = 0.1 * b_err;
-//      else if (b_err < 0.00001){
-//        dX = 0;
-//        dTheta = 0;
-//        //Calculations to include header for the changes.
-//      }
-      phi_l = (dX - ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
-      phi_r = (dX + ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
-      float maxOfRotation = max(phi_l, phi_r);
-      left_speed_pct = phi_l / (maxOfRotation);
-      right_speed_pct = phi_r / (maxOfRotation);
-      // TODO: Implement solution using motorRotate and proportional feedback controller.
-      // sparki.motorRotate function calls for reference:
-      current_speed = ((WHEEL_RADIUS *  left_speed_pct * 100) / 2) + ((WHEEL_RADIUS * right_speed_pct * 100) / 2);
-      sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct * 100));
-      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct * 100));
-
+      if (d_err > 0.01 || h_err > .08) { //0.8 radians = 5 degrees
+        dX = 0.1 * d_err;
+        dTheta = 0.1 * b_err;
+        if (d_err < 0.02){
+          dTheta = 0.1 * h_err;
+        }
+        phi_l = (dX - ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
+        phi_r = (dX + ((AXLE_DIAMETER * dTheta)/2)) / WHEEL_RADIUS;
+        float maxOfRotation = max(abs(phi_l), phi_r);
+        left_speed_pct = phi_l / (maxOfRotation);
+        right_speed_pct = phi_r / (maxOfRotation);
+        // TODO: Implement solution using motorRotate and proportional feedback controller.
+        // sparki.motorRotate function calls for reference:
+        if (phi_l < 0){
+          sparki.motorRotate(MOTOR_LEFT, right_dir, int(abs(left_speed_pct) * 100));
+        }
+        else {
+          sparki.motorRotate(MOTOR_LEFT, left_dir, int(abs(left_speed_pct) * 100));
+        }
+        sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct * 100));
+      }
+      else {
+        sparki.moveStop();
+        sparki.RGB(RGB_RED);
+        left_speed_pct = 0;
+        right_speed_pct = 0;
+      }
       break;
   }
   sparki.clearLCD();
   displayOdometry();
   sparki.updateLCD();
 
-  if(pose_x >= dest_pose_x && pose_y >= dest_pose_y){
-    sparki.moveStop();
-    sparki.RGB(RGB_RED);
-    sparki.beep();
-    delay(10000);
-  }
   
 
   end_time = millis();
