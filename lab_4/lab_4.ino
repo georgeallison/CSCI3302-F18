@@ -21,8 +21,10 @@
 
 #define SERVO_POS_DEG 45
 
+void displayMap();
+
 int current_state = 1;
-const int threshold = 800;
+const int threshold = 600;
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
@@ -34,12 +36,13 @@ float pose_x = 0., pose_y = 0., pose_theta = 0., pose_servo = 0.;
 int left_wheel_rotating = 0, right_wheel_rotating = 0;
 
 // TODO: Define world_map multi-dimensional array
+bool world_map[4][4];
 
 
 
 // TODO: Figure out how many meters of space are in each grid cell
-const float CELL_RESOLUTION_X = 0;  // Line following map is ~60cm x ~42cm
-const float CELL_RESOLUTION_Y = 0; // Line following map is ~60cm x ~42cm
+const float CELL_RESOLUTION_X = .15;  // Line following map is ~60cm x ~42cm
+const float CELL_RESOLUTION_Y = .10; // Line following map is ~60cm x ~42cm
 
 
 void setup() {
@@ -70,31 +73,40 @@ float to_degrees(float rad) {
 
 // Ultrasonic Sensor Readings -> Robot coordinates
 void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {
-  // TODO
+    *rx = dist*sin(theta);
+    *ry = dist*cos(theta);
 }
 
 // Robot coordinates -> World frame coordinates
 void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
-  // TODO
+    *gx = x * cos((pose_theta)) - y * sin((pose_theta)) + pose_x;
+    *gy = x * sin((pose_theta)) + y * cos((pose_theta)) + pose_y;
 }
 
+
 bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
-  // TODO: Set *i and *j to their corresponding grid coords  
-
-  // TODO: Return 0 if the X,Y coordinates were out of bounds
-
-  return 1;
+    if (x < 0 || y <0) {
+      return 0;
+    } else if (x > .60 || y > .40){
+      return 0;
+    }
+    // TODO: Set *i and *j to their corresponding grid coords  
+    *i = floor(x/CELL_RESOLUTION_X);
+    *j = floor(y/CELL_RESOLUTION_Y);
+    
+    return 1;
 }
 
 // Turns grid coordinates into world coordinates (grid centers)
 bool transform_grid_coords_to_xy(int i, int j, float *x, float *y) {
-  // TODO: Return 0 if the I,J coordinates were out of bounds
-
-
-  // TODO: Set *x and *y
-
-
-  
+   if (i < 0 || j < 0) {
+    return 0;
+  } else if (i > CELL_RESOLUTION_X || j > CELL_RESOLUTION_Y) {
+    return 0;
+  }
+    // TODO: Set *x and *y
+   *x = floor(i*CELL_RESOLUTION_X) + (CELL_RESOLUTION_X/2);
+   *y = floor(i*CELL_RESOLUTION_Y) + (CELL_RESOLUTION_Y/2);  
   return 1;
 }
 
@@ -148,9 +160,11 @@ void displayMap() {
   int cur_cell_x=-1, cur_cell_y=-1;
 
   // TODO: Make sure that if the robot is "off-grid", e.g., at a negative grid position or somewhere outside your grid's max x or y position that you don't try to plot the robot's position!
-  
+  const int verticalBuffer = 2;
+  const int horizontalBuffer = 2;
   // 4x4 grid of rectangles that are 15px tall and 30 px wide
   // positioned to have 4 px vertical buffer and 2px horizontal buffer from edge of screen
+  sparki.clearLCD();
   sparki.drawRect(4,2, 30,15);
   sparki.drawRect(34,2, 30,15);
   sparki.drawRect(64,2, 30,15);
@@ -171,10 +185,16 @@ void displayMap() {
   sparki.drawRect(64,47, 30,15);
   sparki.drawRect(94,47, 30,15);
   // above code should draw hollow rectangles, fill them in when an object is found:
-  /*
-      if( object is found )
-          sparki.drawRectFilled( in corresponding grid position ); 
-  */
+  for (int i = 0; i< 4; i ++ ){
+    for (int j=0; j<4; j++){
+      if(world_map[i][j] == true){
+        int x_coord = verticalBuffer + PIXELS_PER_X_CELL * i;
+        int y_coord = horizontalBuffer + PIXELS_PER_Y_CELL * j;
+        sparki.drawRectFilled(x_coord, y_coord, 30, 15);
+      }
+    }
+  }
+  sparki.updateLCD();
 
 }
 
@@ -200,31 +220,35 @@ void displayOdometry() {
 }
 
 void loop() {
+  sparki.RGB(RGB_RED);
   unsigned long begin_time = millis();
   unsigned long begin_movement_time = 0;
   unsigned long end_time = 0;
   unsigned long delay_time = 0;
   bool found_object = 0;
   readSensors();
-  
   sparki.clearLCD();
-  last_cycle_time = (millis() - last_cycle_time) / 1000;
-  updateOdometry(last_cycle_time);
+  float elapsed_time = (millis() - last_cycle_time) / 1000.;
+  updateOdometry(elapsed_time);
   last_cycle_time = millis(); // Start timer for last motor command to determine cycle time
-  serialPrintOdometry();
-
+  //serialPrintOdometry();
   // Mapping Code
   sparki.servo(-to_degrees(pose_servo));
 
   // TODO: Check if sensors found an object
-  if(distance < 10){ // if the distance measured is less than 10 centimeters
-    sparki.println("object found");
-    sparki.beep();
+  if(distance < .25 && distance > 0){
+     float rx, ry, gx, gy;
+     int i, j;
+     transform_us_to_robot_coords(distance, pose_servo, &rx, &ry);
+     transform_robot_to_world_coords(rx, ry, &gx, &gy);
+     int result = transform_xy_to_grid_coords(gx, gy, &i, &j);
+     sparki.RGB(RGB_GREEN);
+     world_map[i][j] = true;
   }
 
 
   // TODO: Adjust Map to accommodate new object
-
+  
   displayMap();
 
   if (line_center < threshold) {
@@ -246,6 +270,7 @@ void loop() {
     pose_theta = 0.;
   } 
 
+  sparki.updateLCD();
   end_time = millis();
   delay_time = end_time - begin_time;
   if (delay_time < 1000*MIN_CYCLE_TIME)
