@@ -23,6 +23,7 @@
 
 void displayMap();
 
+const int numberBuffer = 5;
 int current_state = 1;
 const int threshold = 600;
 int line_left = 1000;
@@ -277,4 +278,27 @@ void loop() {
     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
   else
     delay(10);
+}
+
+int twoD_coordinates_to_integer(int i, int j) { //3.2.a
+	return (j * numberBuffer) + i;
+}
+
+void integer_to_2D_coordinates(int *i, int *j, int input) { //3.2.b
+	int input_mod_number_buffer = input % numberBuffer;
+	*i = input_mod_number_buffer;
+	*j = (input - input_mod_number_buffer) / 5;	
+}
+
+int cost_between_points(int point_one, int point_two){ //3.2.c
+	int x1, y1, x2, y2;
+	integer_to_2D_coordinates(&x1, &y1, point_one);
+	integer_to_2D_coordinates(&x2, &y2, point_two);
+	int distance = sqrt(pow(x1 - x2, 2) + pow(y1-y2, 2));
+  if (distance == 1 && world_map[x1][y1] == false && world_map[x2][y2] == false){
+    return 1;
+  }
+  else{
+    return 99;
+  }
 }
