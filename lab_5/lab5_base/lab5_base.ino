@@ -57,10 +57,10 @@ void setup() {
 bool is_empty(int *arr, int len) {
   for (int i=0; i < len; ++i) {
     if (arr[i] >= 0) {
-      return TRUE;
+      return FALSE;
     }
   }
-  return FALSE;
+  return TRUE;
 }
 
 // Return the index with the minimum value in int array "arr" of length "len"
@@ -145,24 +145,62 @@ int get_travel_cost(int vertex_source, int vertex_dest) {
     }
     return BIG_NUMBER;
 }
+}
 
 
 // Allocate and return a list of ints corresponding to the "prev" variable in Dijkstra's algorithm
 // The returned array prev can be treated as a lookup table:  prev[vertex_index] = next vertex index on the path back to source_vertex
 int *run_dijkstra(int source_vertex) {
+  int total_cells = NUM_X_CELLS * NUM_Y_CELLS;
+ 
   // Array mapping vertex_index to distance of shortest path from source_vertex to vertex_index.
-  int dist[NUM_X_CELLS*NUM_Y_CELLS];
+  int dist[total_cells];
   
   // Queue for identifying which vertices are still being explored -- Q_cost[vertex_index] = shortest known dist to get to vertex_index. 
   // Q_cost[vertex_index] = -1 if the vertex is no longer being considered.
-  int Q_cost[NUM_Y_CELLS*NUM_X_CELLS]; 
+  int Q_cost[total_cells]; 
 
   // Initialize memory for prev array
-  int *prev = new int[NUM_X_CELLS*NUM_Y_CELLS];
+  int *prev = new int[total_cells];
 
   /**
    * TODO: Insert your Dijkstra's code here
    */
+  dist[source_vertex] = 0;
+  
+  for (int i = 0; i < total_cells; i ++){
+    if (source_vertex != i){
+      dist[i] = BIG_NUMBER;
+      prev[i] = -1;
+    }
+    Q_cost[i] = dist[i];
+  }
+   
+   while (!is_empty(Q_cost, NUM_Y_CELLS*NUM_X_CELLS)){
+    int min_index = get_min_index(Q_cost, sizeof(Q_cost));\
+    int current_i, current_j;
+    int neighbors[4] = {-1};
+    int j = 0;
+    for (int i = 0; i < 15; i ++) { //Find all of the neighbors to the current min_index
+        if (get_travel_cost(min_index, i) == 1){
+            neighbors[j] = i;
+            j++;
+        }
+    }
+    
+    for (int i = 0; i < 4; i ++) {
+        if (neighbors[i] != -1) { //For each neighbor that isn't -1, see if there is a better distance.
+            int alt = dist[min_index] + 1;
+            if (alt < dist[neighbors[i]]){
+                dist[neighbors[i]] = alt;
+                prev[neighbors[i]] = min_index;
+            }
+            
+        }
+        
+    }
+    Q_cost[min_index] = -1;
+   }
 
   
   return prev;
