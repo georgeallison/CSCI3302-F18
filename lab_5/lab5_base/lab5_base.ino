@@ -134,6 +134,16 @@ int get_travel_cost(int vertex_source, int vertex_dest) {
         vertex_dest corresponds to (i,j) coordinates outside the map
         vertex_source and vertex_dest are not adjacent to each other (i.e., more than 1 move away from each other)
   */
+  int s_i, s_j, d_i, d_j, distance_between_points;
+  bool s_is_valid, d_is_valid;
+  s_is_valid = vertex_index_to_ij_coordinates(vertex_source, &s_i, &s_j);
+  d_is_valid = vertex_index_to_ij_coordinates(vertex_source, &d_i, &d_j);
+  if (s_is_valid && d_is_valid) {
+    distance_between_points = sqrt(pow(s_i - d_i, 2) + pow(s_j - d_j, 2)); 
+    if (distance_between_points == 1){
+      return 1;
+    }
+    return BIG_NUMBER;
 }
 
 
