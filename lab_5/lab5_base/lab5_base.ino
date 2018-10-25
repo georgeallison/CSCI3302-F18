@@ -138,7 +138,7 @@ int get_travel_cost(int vertex_source, int vertex_dest) {
   bool s_is_valid, d_is_valid;
   s_is_valid = vertex_index_to_ij_coordinates(vertex_source, &s_i, &s_j);
   d_is_valid = vertex_index_to_ij_coordinates(vertex_source, &d_i, &d_j);
-  if (s_is_valid && d_is_valid) {
+  if (s_is_valid && d_is_valid && world_map[s_i, s_j] != 0 && world_map[d_i, d_j] != 0) {
     distance_between_points = sqrt(pow(s_i - d_i, 2) + pow(s_j - d_j, 2)); 
     if (distance_between_points == 1){
       return 1;
@@ -211,13 +211,22 @@ int *run_dijkstra(int source_vertex) {
 // The first entry of your path should be source_vertex and the last entry should be "-1" 
 // to indicate the end of the array since paths can be variable length.
 int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
-  int *final_path = NULL;
-
+  int final_path[16];
+  int *p;
   /**
    * TODO: Insert your code here
    */
-
-  return final_path;
+  int current_vertex = dest_vertex;
+  final_path[0] = -1;
+  final_path[1] = current_vertex;
+  int current_index = 2;
+  while (current_vertex != source_vertex){
+    current_vertex = prev[current_vertex];
+    final_path[current_index] = current_vertex;
+    current_index ++;
+  }
+  p = new int[current_index];
+  return p;
 }
 
 
@@ -236,6 +245,7 @@ void loop () {
   /**
    * TODO: Populate prev with dijkstra's algorithm, then populate path with reconstruct_path
    */
+  prev = run_dijkstra(0);
 
 
   if (prev != NULL) {
@@ -244,15 +254,28 @@ void loop () {
   }
 
   sparki.clearLCD();
-
+  path = reconstruct_path(prev, 0, 5);
   // TODO
   // Display the final path in the following format:
   //
   //  Source: (0,0)
   //  Goal: (3,1)
   //  0 -> 1 -> 2 -> 6 -> 7
-
+  int s_i, s_j, d_i, d_j;
+  vertex_index_to_ij_coordinates(0, &s_i, &s_j);
+  vertex_index_to_ij_coordinates(5, &d_i, &d_j);
+  char buf2[100];
+  char buf3[100];
   
+  sprintf(buf2, "Source: (%d,%d)\n", s_i, s_j);
+  sprintf(buf3,"Goal: (%d,%d)\n", d_i, d_j);
+  sparki.println(buf2);
+  sparki.println(buf3);
+  for (int i = sizeof(path) - 1; i >= 0; i --) {
+      char buf[100];
+      sprintf(buf, "%d -> ", i);
+      sparki.println(buf);
+  }
   sparki.updateLCD();
 
   if (path != NULL) {
