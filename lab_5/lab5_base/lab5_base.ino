@@ -44,7 +44,8 @@ void setup() {
   }
 
   //TODO: Set up your map here by setting individual cells to 0 to indicate obstacles
-//  world_map[0][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,0)
+  world_map[0][3] = 0;
+  world_map[3][0] = 0;// Example of setup code to indicate an obstacle at grid position (1,0)
 //  world_map[1][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,1)
 }
 
@@ -134,11 +135,13 @@ int get_travel_cost(int vertex_source, int vertex_dest) {
         vertex_dest corresponds to (i,j) coordinates outside the map
         vertex_source and vertex_dest are not adjacent to each other (i.e., more than 1 move away from each other)
   */
-  int s_i, s_j, d_i, d_j, distance_between_points;
+  int s_i, s_j, d_i, d_j;
+  float distance_between_points, target_value;
   bool s_is_valid, d_is_valid;
+  target_value = 1.0;
   s_is_valid = vertex_index_to_ij_coordinates(vertex_source, &s_i, &s_j);
   d_is_valid = vertex_index_to_ij_coordinates(vertex_dest, &d_i, &d_j);
-  if (s_is_valid && d_is_valid && world_map[s_i, s_j] != 0 && world_map[d_i, d_j] != 0) {
+  if (s_is_valid && d_is_valid && world_map[s_i][s_j] != 0 && world_map[d_i][d_j] != 0) {
     distance_between_points = sqrt(pow(s_i - d_i, 2) + pow(s_j - d_j, 2)); 
     if (distance_between_points == 1){
       return 1;
@@ -226,6 +229,7 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
     current_vertex = prev[current_vertex];
     final_path[current_index] = current_vertex;
     current_index ++;
+    testLoop(current_vertex);
   }
   p = new int[current_index];
   return p;
@@ -233,7 +237,7 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
 
 void testLoop(int i){
    sparki.clearLCD();
-   sparki.println("Min");
+   sparki.println("Current Node:");
    sparki.print(i);
    sparki.updateLCD();
   delay(1000);
@@ -258,7 +262,7 @@ void loop () {
 
   prev = run_dijkstra(0);
   path = reconstruct_path(prev, 0, 15);
-  testLoop(3);
+
 
   
 
@@ -276,6 +280,7 @@ void loop () {
   //  Source: (0,0)
   //  Goal: (3,1)
   //  0 -> 1 -> 2 -> 6 -> 7
+  sparki.clearLCD();
   int s_i, s_j, d_i, d_j;
   vertex_index_to_ij_coordinates(0, &s_i, &s_j);
   vertex_index_to_ij_coordinates(5, &d_i, &d_j);
@@ -300,6 +305,7 @@ void loop () {
  
   end_time = millis();
   delay_time = end_time - begin_time;
+  sparki.updateLCD();
   if (delay_time < 1000*CYCLE_TIME)
     delay(1000*CYCLE_TIME - delay_time); // each loop takes CYCLE_TIME ms
   else
