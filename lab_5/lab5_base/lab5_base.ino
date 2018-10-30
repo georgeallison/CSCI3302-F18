@@ -70,7 +70,7 @@ int get_min_index(int *arr, int len) {
   for (int i=0;i < len; ++i) {
     if (arr[i] < min_val || min_val == -1) {
       min_val = arr[i];
-      min_idx = i;
+      min_idx = i;    
     }
   }
   return min_idx;
@@ -167,33 +167,37 @@ int *run_dijkstra(int source_vertex) {
    * TODO: Insert your Dijkstra's code here
    */
   dist[source_vertex] = 0;
-  
-  for (int i = 0; i < total_cells; i ++){
+
+
+  for (int i = 0; i < total_cells; i = i + 1){
     if (source_vertex != i){
       dist[i] = BIG_NUMBER;
       prev[i] = -1;
     }
-    Q_cost[i] = dist[i];
+    Q_cost[i] = -1;
   }
-   
-   while (!is_empty(Q_cost, NUM_Y_CELLS*NUM_X_CELLS)){
-    int min_index = get_min_index(Q_cost, sizeof(Q_cost));\
+
+   Q_cost[source_vertex] = 0;
+   while (is_empty(Q_cost, total_cells)){
+    int min_index = get_min_index(Q_cost, total_cells);
+    testLoop(min_index);
     int current_i, current_j;
-    int neighbors[4] = {-1};
+    int neighbors[4] = {-1, -1, -1, -1};
     int j = 0;
-    for (int i = 0; i < 15; i ++) { //Find all of the neighbors to the current min_index
+    for (int i = 0; i < 16; i++) { //Find all of the neighbors to the current min_index
         if (get_travel_cost(min_index, i) == 1){
             neighbors[j] = i;
             j++;
         }
     }
-    
+
     for (int i = 0; i < 4; i ++) {
         if (neighbors[i] != -1) { //For each neighbor that isn't -1, see if there is a better distance.
             int alt = dist[min_index] + 1;
             if (alt < dist[neighbors[i]]){
                 dist[neighbors[i]] = alt;
                 prev[neighbors[i]] = min_index;
+                Q_cost[neighbors[i]] = alt;
             }
             
         }
@@ -201,8 +205,6 @@ int *run_dijkstra(int source_vertex) {
     }
     Q_cost[min_index] = -1;
    }
-
-  
   return prev;
 }
 
@@ -221,12 +223,21 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
   final_path[1] = current_vertex;
   int current_index = 2;
   while (current_vertex != source_vertex){
+    testLoop(current_vertex);
     current_vertex = prev[current_vertex];
     final_path[current_index] = current_vertex;
     current_index ++;
   }
   p = new int[current_index];
   return p;
+}
+
+void testLoop(int i){
+   sparki.clearLCD();
+   sparki.println("Min_Index:");
+   sparki.print(i);
+   sparki.updateLCD();
+  delay(1000);
 }
 
 
@@ -245,7 +256,11 @@ void loop () {
   /**
    * TODO: Populate prev with dijkstra's algorithm, then populate path with reconstruct_path
    */
+
   prev = run_dijkstra(0);
+  path = reconstruct_path(prev, 0, 15);
+
+
 
 
   if (prev != NULL) {
@@ -253,8 +268,6 @@ void loop () {
     prev = NULL; // Once we have the path, don't need to keep prev around in memory anymore.
   }
 
-  sparki.clearLCD();
-  path = reconstruct_path(prev, 0, 5);
   // TODO
   // Display the final path in the following format:
   //
@@ -264,20 +277,19 @@ void loop () {
   int s_i, s_j, d_i, d_j;
   vertex_index_to_ij_coordinates(0, &s_i, &s_j);
   vertex_index_to_ij_coordinates(5, &d_i, &d_j);
-  char buf2[100];
+  char buf2[30];
   char buf3[100];
   
   sprintf(buf2, "Source: (%d,%d)\n", s_i, s_j);
   sprintf(buf3,"Goal: (%d,%d)\n", d_i, d_j);
-  sparki.println(buf2);
+  sparki.println();
   sparki.println(buf3);
   for (int i = sizeof(path) - 1; i >= 0; i --) {
       char buf[100];
-      sprintf(buf, "%d -> ", i);
       sparki.println(buf);
   }
-  sparki.updateLCD();
 
+  delay(10000);
   if (path != NULL) {
     delete path; 
     path=NULL; // Important! Delete the arrays returned from run_dijkstra and reconstruct_path when you're done with them!
