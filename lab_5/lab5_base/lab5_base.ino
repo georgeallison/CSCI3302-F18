@@ -44,8 +44,8 @@ void setup() {
   }
 
   //TODO: Set up your map here by setting individual cells to 0 to indicate obstacles
-  world_map[0][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,0)
-  world_map[1][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,1)
+//  world_map[0][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,0)
+//  world_map[1][1] = 0; // Example of setup code to indicate an obstacle at grid position (1,1)
 }
 
 /*****************************
@@ -66,9 +66,9 @@ bool is_empty(int *arr, int len) {
 // Return the index with the minimum value in int array "arr" of length "len"
 // Assumes positive values only, with values of "-1" indicating 'empty'
 int get_min_index(int *arr, int len) {
-  int min_val=-1, min_idx=-1;
+  int min_val= BIG_NUMBER, min_idx=-1;
   for (int i=0;i < len; ++i) {
-    if (arr[i] < min_val || min_val == -1) {
+    if (arr[i] < min_val && arr[i] != -1) {
       min_val = arr[i];
       min_idx = i;    
     }
@@ -137,14 +137,14 @@ int get_travel_cost(int vertex_source, int vertex_dest) {
   int s_i, s_j, d_i, d_j, distance_between_points;
   bool s_is_valid, d_is_valid;
   s_is_valid = vertex_index_to_ij_coordinates(vertex_source, &s_i, &s_j);
-  d_is_valid = vertex_index_to_ij_coordinates(vertex_source, &d_i, &d_j);
+  d_is_valid = vertex_index_to_ij_coordinates(vertex_dest, &d_i, &d_j);
   if (s_is_valid && d_is_valid && world_map[s_i, s_j] != 0 && world_map[d_i, d_j] != 0) {
     distance_between_points = sqrt(pow(s_i - d_i, 2) + pow(s_j - d_j, 2)); 
     if (distance_between_points == 1){
       return 1;
     }
-    return BIG_NUMBER;
 }
+     return BIG_NUMBER;
 }
 
 
@@ -178,9 +178,8 @@ int *run_dijkstra(int source_vertex) {
   }
 
    Q_cost[source_vertex] = 0;
-   while (is_empty(Q_cost, total_cells)){
+   while (!is_empty(Q_cost, total_cells)){
     int min_index = get_min_index(Q_cost, total_cells);
-    testLoop(min_index);
     int current_i, current_j;
     int neighbors[4] = {-1, -1, -1, -1};
     int j = 0;
@@ -198,6 +197,7 @@ int *run_dijkstra(int source_vertex) {
                 dist[neighbors[i]] = alt;
                 prev[neighbors[i]] = min_index;
                 Q_cost[neighbors[i]] = alt;
+
             }
             
         }
@@ -223,7 +223,6 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
   final_path[1] = current_vertex;
   int current_index = 2;
   while (current_vertex != source_vertex){
-    testLoop(current_vertex);
     current_vertex = prev[current_vertex];
     final_path[current_index] = current_vertex;
     current_index ++;
@@ -234,7 +233,7 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
 
 void testLoop(int i){
    sparki.clearLCD();
-   sparki.println("Min_Index:");
+   sparki.println("Min");
    sparki.print(i);
    sparki.updateLCD();
   delay(1000);
@@ -259,6 +258,9 @@ void loop () {
 
   prev = run_dijkstra(0);
   path = reconstruct_path(prev, 0, 15);
+  testLoop(3);
+
+  
 
 
 
