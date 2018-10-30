@@ -217,7 +217,6 @@ int *run_dijkstra(int source_vertex) {
 // to indicate the end of the array since paths can be variable length.
 int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
   int final_path[16];
-  int reverse_path[16];
   int *p;
   /**
    * TODO: Insert your code here
