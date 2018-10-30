@@ -217,6 +217,7 @@ int *run_dijkstra(int source_vertex) {
 // to indicate the end of the array since paths can be variable length.
 int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
   int final_path[16];
+  int reverse_path[16];
   int *p;
   /**
    * TODO: Insert your code here
@@ -229,24 +230,16 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
     current_vertex = prev[current_vertex];
     final_path[current_index] = current_vertex;
     current_index ++;
-    testLoop(current_vertex);
   }
-  p = new int[current_index];
+  current_index --;
+  p = new int [current_index];
+  int j = current_index;
+  for (int i = 0; i <= current_index; i ++){
+    p[i] = final_path[j];
+    j --;
+  }
   return p;
 }
-
-void testLoop(int i){
-   sparki.clearLCD();
-   sparki.println("Current Node:");
-   sparki.print(i);
-   sparki.updateLCD();
-  delay(1000);
-}
-
-
-
-
-
 
 void loop () {
   unsigned long begin_time = millis();
@@ -283,17 +276,21 @@ void loop () {
   sparki.clearLCD();
   int s_i, s_j, d_i, d_j;
   vertex_index_to_ij_coordinates(0, &s_i, &s_j);
-  vertex_index_to_ij_coordinates(5, &d_i, &d_j);
-  char buf2[30];
-  char buf3[100];
+  vertex_index_to_ij_coordinates(15, &d_i, &d_j);
+  char buf2[50];
+  char buf3[50];
+  buf2[30] = '\0';
+  buf3[30]='\0';
   
   sprintf(buf2, "Source: (%d,%d)\n", s_i, s_j);
   sprintf(buf3,"Goal: (%d,%d)\n", d_i, d_j);
-  sparki.println();
+  sparki.println(buf2);
   sparki.println(buf3);
-  for (int i = sizeof(path) - 1; i >= 0; i --) {
-      char buf[100];
-      sparki.println(buf);
+  for (int i = 0; path[i] != -1; i ++) {
+    sparki.print(path[i]);
+    if (path[i + 1] != -1){
+       sparki.print("->");
+    }
   }
 
   delay(10000);
