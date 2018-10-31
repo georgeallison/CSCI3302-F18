@@ -186,7 +186,7 @@ int *run_dijkstra(int source_vertex) {
     int current_i, current_j;
     int neighbors[4] = {-1, -1, -1, -1};
     int j = 0;
-    for (int i = 0; i < 16; i++) { //Find all of the neighbors to the current min_index
+    for (int i = 0; i < total_cells; i++) { //Find all of the neighbors to the current min_index
         if (get_travel_cost(min_index, i) == 1){
             neighbors[j] = i;
             j++;
@@ -216,11 +216,16 @@ int *run_dijkstra(int source_vertex) {
 // The first entry of your path should be source_vertex and the last entry should be "-1" 
 // to indicate the end of the array since paths can be variable length.
 int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
-  int final_path[16];
+  int final_path[NUM_X_CELLS * NUM_Y_CELLS];
   int *p;
   /**
    * TODO: Insert your code here
    */
+  if (prev[dest_vertex] == -1 ){ // Quick check to see if the dest_vertex is a valid point or not.
+    p = new int [1];
+    p[0] = -1;
+    return p;
+  }
   int current_vertex = dest_vertex;
   final_path[0] = -1;
   final_path[1] = current_vertex;
@@ -233,7 +238,7 @@ int *reconstruct_path(int *prev, int source_vertex, int dest_vertex) {
   current_index --;
   p = new int [current_index];
   int j = current_index;
-  for (int i = 0; i <= current_index; i ++){
+  for (int i = 0; i <= current_index; i ++){ // Format the array in the proper order
     p[i] = final_path[j];
     j --;
   }
@@ -278,25 +283,27 @@ void loop () {
   vertex_index_to_ij_coordinates(15, &d_i, &d_j);
   char buf2[50];
   char buf3[50];
-  buf2[30] = '\0';
+  buf2[30] = '\0'; //Arduino specifies that character strings end in the null character to work.
   buf3[30]='\0';
   
   sprintf(buf2, "Source: (%d,%d)\n", s_i, s_j);
   sprintf(buf3,"Goal: (%d,%d)\n", d_i, d_j);
   sparki.println(buf2);
   sparki.println(buf3);
+  if (path[0] == -1){
+    sparki.println("No Viable Paths Found!");
+  }
   for (int i = 0; path[i] != -1; i ++) {
     sparki.print(path[i]);
     if (path[i + 1] != -1){
        sparki.print("->");
     }
   }
-
-  delay(10000);
   if (path != NULL) {
     delete path; 
     path=NULL; // Important! Delete the arrays returned from run_dijkstra and reconstruct_path when you're done with them!
   }
+  delay(10000);
   ///////////////////////////////////////////////////  
  
   end_time = millis();
