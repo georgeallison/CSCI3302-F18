@@ -21,8 +21,8 @@
 #define BCK -1
 
 /*States for state machine*/
-#define INITIAL_GOAL_STATE_I 2
-#define INITIAL_GOAL_STATE_J 1
+#define INITIAL_GOAL_STATE_I 3
+#define INITIAL_GOAL_STATE_J 3
 
 #define STATE_START 0 
 #define STATE_HAS_PATH 1
@@ -420,7 +420,7 @@ void loop () {
       goal_changed = FALSE;
       path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
       //If issues check logic, i.e. we may need to check second to last value of the array
-      if (path[0] != -1) {
+      if (path[0] != ij_coordinates_to_vertex_index(source_i, source_j) ) {
         current_state = STATE_HAS_PATH;
         path_index = 1;
       }
@@ -429,10 +429,12 @@ void loop () {
       //Code goes here
       if (path[path_index] == -1){
         // We're at the destination.
-        sparki.moveStop();
+        moveStop();
+        
         current_state = -1;
         sparki.beep();
         delay(100);
+        break;
       }
       int dest_i, dest_j, two_dest_i, two_dest_j;
       float two_x, two_y;
@@ -444,8 +446,6 @@ void loop () {
         dest_pose_theta = atan2(two_y - dest_pose_y, two_x - dest_pose_x);
       }  
       /*Inverse Kinematics*/
-      compute_IK_errors();/*sets d_err, b_err, and h_err*/
-      compute_IK_wheel_rotations();
         
       //Update pose_x and pose_y 
       path_index ++;
@@ -454,9 +454,10 @@ void loop () {
       break;
       
     case STATE_SEEKING_POSE:
+      compute_IK_errors();/*sets d_err, b_err, and h_err*/
+      compute_IK_wheel_rotations();
       set_IK_motor_rotations();
       if (is_robot_at_IK_destination_pose()) {
-        moveStop();
         current_state = STATE_HAS_PATH;
       }
       //Code goes here
