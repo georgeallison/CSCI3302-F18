@@ -1,6 +1,6 @@
 /*
-	Lab 6 
-	George Allison, Pierce Doogan, Zander Louie, David Doan, Ash Choksi
+  Lab 6 
+  George Allison, Pierce Doogan, Zander Louie, David Doan, Ash Choksi
 */
 
 #include <sparki.h>
@@ -16,13 +16,17 @@
 #define AXLE_DIAMETER 0.0865
 #define M_PI 3.14159
 #define WHEEL_RADIUS 0.03
-#define FWD 1
+#define FWD 1 //https://codeshare.io/new
 #define NONE 0
 #define BCK -1
 
+/*States for state machine*/
 #define INITIAL_GOAL_STATE_I 2
 #define INITIAL_GOAL_STATE_J 1
 
+#define STATE_START 0 
+#define STATE_HAS_PATH 1
+#define STATE_SEEKING_POSE 2
 
 // Number of vertices to discretize the map
 #define NUM_X_CELLS 4
@@ -33,6 +37,8 @@
 #define MAP_SIZE_Y 0.42
 
 #define BIG_NUMBER 255
+
+short current_state = STATE_START;
 
 short prev_holder[NUM_X_CELLS*NUM_Y_CELLS];
 
@@ -49,6 +55,9 @@ int left_dir = DIR_CCW;
 int right_dir = DIR_CW;
 int left_wheel_rotating = NONE;
 int right_wheel_rotating = NONE;
+
+int goal_vertex;
+int path_index;
 
 //float dX  = 0., dTheta = 0.;
 
@@ -73,7 +82,8 @@ void setup() {
   left_wheel_rotating = NONE;
   right_wheel_rotating = NONE;
 
-  set_pose_destination(0, 0, 0);
+  set_pose_destination(0, 0, 0); 
+  // ^ we need to change this if we are starting on a different position on the map
 
   // Dijkstra Setup
   for (int j = 0; j < NUM_Y_CELLS; ++j) {
@@ -280,11 +290,13 @@ byte get_travel_cost(int vertex_source, int vertex_dest) {
   are_neighboring = (abs(s_i - d_i) + abs(s_j - d_j) <= 1); // 4-Connected world
 
   // TODO: Add your code to incorporate world_map here
-
-  if (are_neighboring)
+  if (are_neighboring && world_map[s_i][s_j] != 0 && world_map[d_i][d_j] != 0){
     return 1;
-  else
+  }
+  else {
     return BIG_NUMBER;
+  }
+    
 }
 
 short *run_dijkstra(bool world_map[NUM_Y_CELLS][NUM_X_CELLS], int source_vertex) {
@@ -390,32 +402,83 @@ void loop () {
 
   updateOdometry();
   displayOdometry();
-  // Your code should work with this test uncommented!
-  /*
-  if (millis() - program_start_time > 15000 && goal_i != 0 && goal_j != 0) {
-    // After 15 seconds of operation, set the goal vertex to 0,0!
+  
+  if (millis() - program_start_time > 10000 && goal_i != 0 && goal_j != 0) {
+    // After 10 seconds of operation, set the goal vertex to 0,0!
     goal_i = 0; goal_j = 0;    
     goal_changed = TRUE;
   }
-  */
 
   /****************************************/
   // Implement your state machine here    //
   // in place of the example code         //
-  /****************************************/
+  /****************************************/ 
+  switch(current_state){
+    case STATE_START:
+      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
+      goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
+      goal_changed = FALSE;
+      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
+      //If issues check logic, i.e. we may need to check second to last value of the array
+      if (path[0] != -1) {
+        current_state = STATE_HAS_PATH;
+        path_index = 1;
+      }
+      break;
+    case STATE_HAS_PATH:
+      //Code goes here
+      if (path[path_index] == -1){
+        // We're at the destination.
+        sparki.moveStop();
+        current_state = -1;
+        sparki.beep();
+        delay(100);
+      }
+      int dest_i, dest_j, two_dest_i, two_dest_j;
+      float two_x, two_y;
+      vertex_index_to_ij_coordinates(path[path_index], &dest_i, &dest_j);
+      ij_coordinates_to_xy_coordinates(dest_i,dest_j,&dest_pose_x,&dest_pose_y);
+      if (path[path_index + 1] != -1){
+        vertex_index_to_ij_coordinates(path[path_index + 1], &two_dest_i, &two_dest_j);
+        ij_coordinates_to_xy_coordinates(two_dest_i, two_dest_j, &two_x, &two_y);
+        dest_pose_theta = atan2(two_y - dest_pose_y, two_x - dest_pose_x);
+      }  
+      /*Inverse Kinematics*/
+      compute_IK_errors();/*sets d_err, b_err, and h_err*/
+      compute_IK_wheel_rotations();
+        
+      //Update pose_x and pose_y 
+      path_index ++;
+      if(goal_changed == TRUE){current_state = STATE_START;}
+      current_state = STATE_SEEKING_POSE;
+      break;
+      
+    case STATE_SEEKING_POSE:
+      set_IK_motor_rotations();
+      if (is_robot_at_IK_destination_pose()) {
+        moveStop();
+        current_state = STATE_HAS_PATH;
+      }
+      //Code goes here
+      
+      if(goal_changed == TRUE){current_state = STATE_START;}
+      break;
+      
+    default:
+      delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
+      break;
+  }
 
   // Example code to use IK //
-  compute_IK_errors();
-  compute_IK_wheel_rotations();
-  set_IK_motor_rotations();
-  if (is_robot_at_IK_destination_pose()) {
-    moveStop();
-  }
+  // compute_IK_errors();
+  // compute_IK_wheel_rotations();
+  // set_IK_motor_rotations();
+  // if (is_robot_at_IK_destination_pose()) {
+  //   moveStop();
+  // }
   ///////////////////////////
 
-  // Example code to retrieve a path from Dijkstra //
-  prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
-  path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
+ 
 
   // TODO: Do something with path here instead of just displaying it!
   /*
@@ -429,7 +492,7 @@ void loop () {
   sparki.println(" DONE! "); 
   sparki.updateLCD();
   */
-  delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
+  //delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
  
   ///////////////////////////////////////////////////  
  
