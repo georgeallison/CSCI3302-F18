@@ -408,6 +408,9 @@ void loop () {
         // We're at the destination.
         moveStop();
         
+        if(goal_changed == TRUE){
+          current_state = STATE_START;
+        }
         current_state = -1; //BH: Try changing back to STATE_START here instead, that way if a new goal_i,j comes around you'll head to it automatically
         sparki.beep();
         delay(100);
@@ -420,16 +423,13 @@ void loop () {
       if (path[path_index + 1] != -1){
         vertex_index_to_ij_coordinates(path[path_index + 1], &two_dest_i, &two_dest_j);
         ij_coordinates_to_xy_coordinates(two_dest_i, two_dest_j, &two_x, &two_y);
-        dest_pose_theta = atan2(dest_pose_y - two_y, dest_pose_x - two_x); // Flip two_y and dest_pose_y around here (same with x) -- this will have you pointing the opposite direction!
+        dest_pose_theta = atan2(two_y - dest_pose_y, two_x - dest_pose_x); 
       }  
       /*Inverse Kinematics*/
         
       //Update pose_x and pose_y 
       path_index++;
-      if(goal_changed == TRUE){current_state = STATE_START;}
-      else {
-        current_state = STATE_SEEKING_POSE;
-      }
+      current_state = STATE_SEEKING_POSE;
       break;
       
     case STATE_SEEKING_POSE:
