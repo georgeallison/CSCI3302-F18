@@ -383,6 +383,13 @@ void displayOdometry() {
   sparki.updateLCD();
 }
 
+void printTest(int display){
+  sparki.clearLCD();
+  sparki.print(display);
+  sparki.updateLCD();
+  delay(1000);
+  
+}
 void loop () {
   unsigned long begin_time = millis();
   unsigned long end_time = 0;
@@ -390,34 +397,44 @@ void loop () {
   updateOdometry();
   displayOdometry();
 
+    // Your code should work with this test uncommented!
+  /*
+  if (millis() - program_start_time > 15000 && goal_i != 0 && goal_j != 0) {
+    // After 15 seconds of operation, set the goal vertex to 0,0!
+    goal_i = 0; goal_j = 0;    
+    goal_changed = TRUE;
+  }
+  */
+  
   switch(current_state){
     case STATE_START:
-      xy_coordinates_to_ij_coordinates(pose_x, pose_y, &source_i, &source_j)
-      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); //BH: Try using the robot's current position to figure out "source (i,j)" here
+      xy_coordinates_to_ij_coordinates(pose_x, pose_y, &source_i, &source_j);
+      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j));
       goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
+      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
       goal_changed = FALSE;
-      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex); //BH: Try using the robot's current position to figure out "source (i,j)" here
-      //If issues check logic, i.e. we may need to check second to last value of the array
-      if (path[0] != ij_coordinates_to_vertex_index(source_i, source_j) ) {
+      if (path[0] != ij_coordinates_to_vertex_index(source_i, source_j)) {
         current_state = STATE_HAS_PATH;
         path_index = 1;
       }
       break;
     case STATE_HAS_PATH:
-      //Code goes here
+      goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
+      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
+
       if (path[path_index] == -1){
         // We're at the destination.
+        delete path; 
+        path = NULL;
         moveStop();
-        
         if(goal_changed == TRUE){
           current_state = STATE_START;
         }
-        current_state = -1; //BH: Try changing back to STATE_START here instead, that way if a new goal_i,j comes around you'll head to it automatically
         sparki.beep();
         delay(100);
         break;
       }
-      int dest_i, dest_j, two_dest_i, two_dest_j;
+      int dest_i, dest_j, two_dest_i, two_dest_j, path_next_index;
       float two_x, two_y;
       vertex_index_to_ij_coordinates(path[path_index], &dest_i, &dest_j);
       ij_coordinates_to_xy_coordinates(dest_i,dest_j,&dest_pose_x,&dest_pose_y);
@@ -446,6 +463,8 @@ void loop () {
       break;
   }
 
+//  delete path;
+//  path = null;
   // Example code to use IK //
   // compute_IK_errors();
   // compute_IK_wheel_rotations();
@@ -455,8 +474,6 @@ void loop () {
   // }
   ///////////////////////////
 
-  delete path; 
-  path = NULL;
   
   end_time = millis();
   if (end_time - begin_time < 1000*CYCLE_TIME)
