@@ -392,6 +392,7 @@ void loop () {
 
   switch(current_state){
     case STATE_START:
+      xy_coordinates_to_ij_coordinates(pose_x, pose_y, &source_i, &source_j)
       prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); //BH: Try using the robot's current position to figure out "source (i,j)" here
       goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
       goal_changed = FALSE;
