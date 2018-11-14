@@ -421,15 +421,15 @@ void loop () {
     case STATE_HAS_PATH:
       goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j); //For some reason, path got reset every time we entered this state, so we must recalculate it.
       path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
+      if (goal_changed == TRUE){
+        current_state = STATE_START;
+      }
 
       if (path[path_index] == -1){
         // We're at the destination.
         delete path; 
         path = NULL;
         moveStop();
-        if(goal_changed == TRUE){
-          current_state = STATE_START;
-        }
         sparki.beep();
         delay(100);
         break;
