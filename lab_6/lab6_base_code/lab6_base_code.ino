@@ -419,7 +419,7 @@ void loop () {
       }
       break;
     case STATE_HAS_PATH:
-      goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
+      goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j); //For some reason, path got reset every time we entered this state, so we must recalculate it.
       path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
 
       if (path[path_index] == -1){
