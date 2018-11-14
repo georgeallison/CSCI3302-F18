@@ -16,7 +16,7 @@
 #define AXLE_DIAMETER 0.0865
 #define M_PI 3.14159
 #define WHEEL_RADIUS 0.03
-#define FWD 1 //https://codeshare.io/new
+#define FWD 1
 #define NONE 0
 #define BCK -1
 
@@ -59,9 +59,6 @@ int right_wheel_rotating = NONE;
 int goal_vertex;
 int path_index;
 
-//float dX  = 0., dTheta = 0.;
-
-
 bool world_map[NUM_Y_CELLS][NUM_X_CELLS];
 // Example source/dest pair: Move from (0,0) to (2,1)
 bool goal_changed = TRUE; // Track if the goal coordinates have been changed since we last path planned.
@@ -83,7 +80,6 @@ void setup() {
   right_wheel_rotating = NONE;
 
   set_pose_destination(0, 0, 0); 
-  // ^ we need to change this if we are starting on a different position on the map
 
   // Dijkstra Setup
   for (int j = 0; j < NUM_Y_CELLS; ++j) {
@@ -131,8 +127,6 @@ void updateOdometry() {
 /*****************************
  * Core IK Functions         *
  *****************************/
-
- 
 void moveStop() {
   left_wheel_rotating = NONE;
   right_wheel_rotating = NONE;
@@ -210,7 +204,6 @@ bool is_robot_at_IK_destination_pose() {
 /*****************************
  * Dijkstra Helper Functions *
  *****************************/
-
 // Return 1 if there are entries in range [0,inf) in arr
 // otherwise return 0, signifying empty queue
 bool is_not_empty(short *arr, int len) {
@@ -237,7 +230,6 @@ int get_min_index(short *arr, int len) {
 /**********************************
  * Coordinate Transform Functions *
  **********************************/
-
 // Returns 0 if something went wrong -- assume invalid i and j values being set
 bool vertex_index_to_ij_coordinates(int v_idx, int *i, int *j) {
   *i = v_idx % NUM_X_CELLS;
@@ -275,8 +267,6 @@ bool xy_coordinates_to_ij_coordinates(float x, float y, int *i, int *j) {
 /**********************************
  *      Core Dijkstra Functions   *
  **********************************/
-
-
 // Returns the cost of moving from vertex_source to vertex_dest
 byte get_travel_cost(int vertex_source, int vertex_dest) {
   bool are_neighboring = 1;
@@ -368,9 +358,6 @@ short *reconstruct_path(short *prev, int source_vertex, int dest_vertex) {
 }
 
 
-
-
-
 void displayOdometry() {
   sparki.clearLCD();
   sparki.print("X: ");
@@ -402,23 +389,13 @@ void loop () {
 
   updateOdometry();
   displayOdometry();
-  
-  if (millis() - program_start_time > 10000 && goal_i != 0 && goal_j != 0) {
-    // After 10 seconds of operation, set the goal vertex to 0,0!
-    goal_i = 0; goal_j = 0;    
-    goal_changed = TRUE;
-  }
 
-  /****************************************/
-  // Implement your state machine here    //
-  // in place of the example code         //
-  /****************************************/ 
   switch(current_state){
     case STATE_START:
-      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
+      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); //BH: Try using the robot's current position to figure out "source (i,j)" here
       goal_vertex = ij_coordinates_to_vertex_index(goal_i, goal_j);
       goal_changed = FALSE;
-      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex);
+      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), goal_vertex); //BH: Try using the robot's current position to figure out "source (i,j)" here
       //If issues check logic, i.e. we may need to check second to last value of the array
       if (path[0] != ij_coordinates_to_vertex_index(source_i, source_j) ) {
         current_state = STATE_HAS_PATH;
@@ -431,7 +408,7 @@ void loop () {
         // We're at the destination.
         moveStop();
         
-        current_state = -1;
+        current_state = -1; //BH: Try changing back to STATE_START here instead, that way if a new goal_i,j comes around you'll head to it automatically
         sparki.beep();
         delay(100);
         break;
@@ -443,14 +420,16 @@ void loop () {
       if (path[path_index + 1] != -1){
         vertex_index_to_ij_coordinates(path[path_index + 1], &two_dest_i, &two_dest_j);
         ij_coordinates_to_xy_coordinates(two_dest_i, two_dest_j, &two_x, &two_y);
-        dest_pose_theta = atan2(two_y - dest_pose_y, two_x - dest_pose_x);
+        dest_pose_theta = atan2(dest_pose_y - two_y, dest_pose_x - two_x); // Flip two_y and dest_pose_y around here (same with x) -- this will have you pointing the opposite direction!
       }  
       /*Inverse Kinematics*/
         
       //Update pose_x and pose_y 
-      path_index ++;
+      path_index++;
       if(goal_changed == TRUE){current_state = STATE_START;}
-      current_state = STATE_SEEKING_POSE;
+      else {
+        current_state = STATE_SEEKING_POSE;
+      }
       break;
       
     case STATE_SEEKING_POSE:
@@ -464,10 +443,6 @@ void loop () {
       
       if(goal_changed == TRUE){current_state = STATE_START;}
       break;
-      
-    default:
-      delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
-      break;
   }
 
   // Example code to use IK //
@@ -479,24 +454,9 @@ void loop () {
   // }
   ///////////////////////////
 
- 
-
-  // TODO: Do something with path here instead of just displaying it!
-  /*
-  sparki.clearLCD();
-  sparki.print("Source: "); sparki.print(source_i); sparki.print(", "); sparki.println(source_j);
-  sparki.print("Goal: "); sparki.print(goal_i); sparki.print(", "); sparki.println(goal_j);
-  for (int i=0; path[i] != -1; ++i) {
-    sparki.print(path[i]);
-    sparki.print(" -> "); 
-  }
-  sparki.println(" DONE! "); 
-  sparki.updateLCD();
-  */
-  //delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
- 
-  ///////////////////////////////////////////////////  
- 
+  delete path; 
+  path = NULL;
+  
   end_time = millis();
   if (end_time - begin_time < 1000*CYCLE_TIME)
     delay(1000*CYCLE_TIME - (end_time - begin_time)); // each loop takes CYCLE_TIME ms
